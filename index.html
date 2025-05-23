@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Icy Tower Karakter Seçimi</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: black; }
+    canvas { display: block; margin: 0 auto; background: black; }
+    #menu, #character-select {
+      position: absolute; width: 100%; height: 100%; display: flex;
+      justify-content: center; align-items: center; flex-direction: column;
+      background: wheat; z-index: 10;
+    }
+    button {
+      margin: 10px; padding: 15px 30px;
+      font-size: 18px; border: none; cursor: pointer;
+    }
+    .character-option {
+      display: inline-block;
+      margin: 10px;
+      cursor: pointer;
+    }
+    .character-option img {
+      width: 80px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="menu">
+  <button onclick="startGame()">Oyuna Başla</button>
+  <button onclick="showCharacterSelect()">Karakter Seçimi</button>
+  <button onclick="alert('Ayarlar daha eklenmedi')">Ayarlar</button>
+</div>
+
+<div id="character-select" style="display:none">
+  <div>
+    <div class="character-option" onclick="selectCharacter(0)"><img src="assets/character1stand.png"></div>
+    <div class="character-option" onclick="selectCharacter(1)"><img src="assets/character2stand.png"></div>
+    <div class="character-option" onclick="selectCharacter(2)"><img src="assets/character3stand.png"></div>
+    <div class="character-option" onclick="selectCharacter(3)"><img src="assets/character4stand.png"></div>
+  </div>
+  <button onclick="startGame()">Seç ve Oyuna Başla</button>
+</div>
+
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+
+<script>
+const characters = [
+  { stand: new Image(), jump: new Image() },
+  { stand: new Image(), jump: new Image() },
+  { stand: new Image(), jump: new Image() },
+  { stand: new Image(), jump: new Image() }
+];
+characters[0].stand.src = "assets/character1stand.png";
+characters[0].jump.src  = "assets/character1jump.png";
+characters[1].stand.src = "assets/character2stand.png";
+characters[1].jump.src  = "assets/character2jump.png";
+characters[2].stand.src = "assets/character3stand.png";
+characters[2].jump.src  = "assets/character3jump.png";
+characters[3].stand.src = "assets/character4stand.png";
+characters[3].jump.src  = "assets/character4jump.png";
+
+
+let selectedCharacterIndex = 0;
+function showCharacterSelect() {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('character-select').style.display = 'flex';
+}
+function selectCharacter(index) {
+  selectedCharacterIndex = index;
+}
+function startGame() {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('character-select').style.display = 'none';
+
+  // Seçilen karakterin stand ve jump görseli yüklendi mi kontrol et
+  const current = characters[selectedCharacterIndex];
+
+  const checkLoaded = () => {
+    if (current.stand.complete && current.jump.complete &&
+        current.stand.naturalWidth > 0 && current.jump.naturalWidth > 0) {
+      initGame();
+    } else {
+      setTimeout(checkLoaded, 100); // yüklenmemişse tekrar kontrol et
+    }
+  };
+
+  checkLoaded();
+}
+
+
+function initGame() {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width, height = canvas.height;
+  const player = { width: 40, height: 50, x: 0, y: 0, vy: 0 };
+  const moveSpeed = 4, jumpSpeed = 12, gravity = 0.5;
+  let onPlatform = false;
+  let platforms = [];
+  const platformHeight = 10;
+  const platformMinWidth = 80, platformMaxWidth = 100;
+  const platformGapMin = 80, platformGapMax = 120;
+  const movingPlatformChance = 0.2, movingPlatformSpeed = 1;
+  const platformMargin = 30;
+  let scrollOffset = 0;
+  let gameStarted = false;
+  let scrollSpeed = 0;
+  const baseScrollSpeed = 1.4;
+  const scrollSpeedIncreaseInterval = 60000;
+  let lastScrollIncrease = 0;
+
+  const basePlatform = {
+    x: width / 2 - 50, y: height - 20,
+    width: 100, height: platformHeight,
+    vx: 0, color: '#fff'
+  };
+  platforms.push(basePlatform);
+  player.x = basePlatform.x + basePlatform.width / 2 - player.width / 2;
+  player.y = basePlatform.y - player.height;
+  onPlatform = true;
+
+  let yPos = basePlatform.y;
+  while (yPos > -1000) {
+    const gap = Math.min(Math.random() * (platformGapMax - platformGapMin) + platformGapMin, 140);
+    yPos -= gap;
+    const pw = Math.random() * (platformMaxWidth - platformMinWidth) + platformMinWidth;
+    const px = Math.random() * (width - pw - 2 * platformMargin) + platformMargin;
+    const moving = Math.random() < movingPlatformChance;
+    const vx = moving ? (Math.random() * 2 - 1) * movingPlatformSpeed : 0;
+    platforms.push({ x: px, y: yPos, width: pw, height: platformHeight, vx, color: '#fff' });
+  }
+
+  let leftPressed = false, rightPressed = false;
+  document.addEventListener('keydown', function(e) {
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') leftPressed = true;
+    if (e.code === 'ArrowRight' || e.code === 'KeyD') rightPressed = true;
+    if ((e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') && onPlatform) {
+      player.vy = -jumpSpeed;
+      onPlatform = false;
+      if (!gameStarted) {
+        gameStarted = true;
+        scrollSpeed = baseScrollSpeed;
+        lastScrollIncrease = Date.now();
+      }
+    }
+  });
+  document.addEventListener('keyup', function(e) {
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') leftPressed = false;
+    if (e.code === 'ArrowRight' || e.code === 'KeyD') rightPressed = false;
+  });
+
+  let startTime = Date.now(), score = 0, timer = 0, gameOver = false;
+  const backgroundImages = [];
+  for (let i = 1; i <= 4; i++) {
+    const img = new Image();
+    img.src = `Unknown-${i}.jpeg`;
+    backgroundImages.push(img);
+  }
+
+  function getCurrentBackgroundImage() {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    if (elapsed < 60) return backgroundImages[0];
+    if (elapsed < 120) return backgroundImages[1];
+    if (elapsed < 180) return backgroundImages[2];
+    return backgroundImages[3];
+  }
+
+  function update() {
+    if (gameOver) return;
+    if (leftPressed) player.x -= moveSpeed;
+    if (rightPressed) player.x += moveSpeed;
+    player.x = Math.max(0, Math.min(width - player.width, player.x));
+    player.vy += gravity;
+    player.y += player.vy;
+    onPlatform = false;
+
+    for (const p of platforms) {
+      const horizontalCollision = player.x + player.width > p.x && player.x < p.x + p.width;
+      const isLanding = player.vy >= 0 && player.y + player.height >= p.y && player.y + player.height <= p.y + platformHeight + 5;
+      if (horizontalCollision && isLanding) {
+        player.y = p.y - player.height;
+        player.vy = 0;
+        onPlatform = true;
+        break;
+      }
+    }
+
+    if (gameStarted) {
+      const now = Date.now();
+      const scrollAmount = scrollSpeed;
+      player.y += scrollAmount;
+      platforms.forEach(p => p.y += scrollAmount);
+      scrollOffset += scrollAmount;
+      if (now - lastScrollIncrease >= scrollSpeedIncreaseInterval) {
+        scrollSpeed += 0.5;
+        lastScrollIncrease = now;
+      }
+      if (player.y > height) gameOver = true;
+    }
+
+    for (const p of platforms) {
+      if (p.vx !== 0) {
+        p.x += p.vx;
+        if (p.x < platformMargin || p.x + p.width > width - platformMargin) {
+          p.vx *= -1;
+        }
+      }
+    }
+
+    platforms = platforms.filter(p => p.y < height + 200);
+    generateNewPlatforms();
+    score = Math.floor(scrollOffset);
+    timer = Math.floor((Date.now() - startTime) / 1000);
+  }
+
+  function draw() {
+    const bg = getCurrentBackgroundImage();
+    if (bg.complete) ctx.drawImage(bg, 0, 0, width, height);
+    else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, width, height); }
+
+    const useJumpImage = !onPlatform || player.vy < -2;
+    const currentCharacter = characters[selectedCharacterIndex];
+    const playerImg = useJumpImage ? currentCharacter.jump : currentCharacter.stand;
+    if (playerImg.complete) ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+    else { ctx.fillStyle = '#0f0'; ctx.fillRect(player.x, player.y, player.width, player.height); }
+
+    for (const p of platforms) {
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, p.width, p.height);
+    }
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '18px monospace';
+    ctx.fillText('Skor: ' + score, 10, 20);
+    ctx.fillText('Süre: ' + timer, 10, 40);
+
+    if (gameOver) {
+      ctx.fillStyle = 'red';
+      ctx.font = '40px monospace';
+      ctx.fillText('OYUN BİTTİ', width / 2 - 100, height / 2);
+    }
+  }
+
+  function generateNewPlatforms() {
+    if (platforms.length === 0) return;
+    let highestPlatform = platforms.reduce((prev, curr) => prev.y < curr.y ? prev : curr);
+    while (highestPlatform.y > -1000) {
+      const gap = Math.min(Math.random() * (platformGapMax - platformGapMin) + platformGapMin, 140);
+      const newY = highestPlatform.y - gap;
+      const pw = Math.random() * (platformMaxWidth - platformMinWidth) + platformMinWidth;
+      const px = Math.random() * (width - pw - 2 * platformMargin) + platformMargin;
+      const moving = Math.random() < movingPlatformChance;
+      const vx = moving ? (Math.random() * 2 - 1) * movingPlatformSpeed : 0;
+      platforms.push({ x: px, y: newY, width: pw, height: platformHeight, vx, color: '#fff' });
+      highestPlatform = { y: newY };
+    }
+  }
+
+  function gameLoop() {
+    update();
+    draw();
+    if (!gameOver) requestAnimationFrame(gameLoop);
+  }
+
+  gameLoop();
+}
+</script>
+
+</body>
+</html>
