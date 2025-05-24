@@ -6,31 +6,93 @@
   <style>
     body { margin: 0; overflow: hidden; background: black; }
     canvas { display: block; margin: 0 auto; background: black; }
-    #menu, #character-select {
-      position: absolute; width: 100%; height: 100%; display: flex;
-      justify-content: center; align-items: center; flex-direction: column;
-      background: wheat; z-index: 10;
-    }
-    button {
-      margin: 10px; padding: 15px 30px;
-      font-size: 18px; border: none; cursor: pointer;
+    #menu, #settings {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  background: url("assets/background1.png") no-repeat center center;
+  background-size: contain; /* Görselin tamamı sığacak şekilde */
+  background-color: black;  /* Görsel kenarlarında boşluk kalırsa siyah göster */
+  z-index: 10;
+  color: white;
+}
+
+#character-select {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  background: url("assets/background2.png") no-repeat center center;
+  background-size: contain; /* Görselin tamamı sığacak şekilde */
+  background-color: black;  /* Görsel kenarlarında boşluk kalırsa siyah göster */
+  z-index: 10;
+  color: white;
+}
+
+
+button {
+  margin: 10px;
+  padding: 15px 30px;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 10px;
+}
+
+    .character-option { display: inline-block; margin: 10px; cursor: pointer; }
+    .character-option img { width: 80px; }
+    #settings { display: none; z-index: 11; }
+    #pauseMenu {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      z-index: 12;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
     .character-option {
-      display: inline-block;
-      margin: 10px;
-      cursor: pointer;
-    }
-    .character-option img {
-      width: 80px;
-    }
+    display: inline-block;
+    margin: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  .character-option img {
+    width: 80px;
+    height: 100px;
+    transition: transform 0.2s ease;
+  }
+
+  .character-option:hover img {
+    transform: scale(1.2);
+  }
+  .character-option.selected img {
+  transform: scale(1.2);
+}
+
   </style>
 </head>
 <body>
 
+<audio id="jumpSound" src="assets/jump.wav"></audio>
+<audio id="bgm" src="assets/bgm.wav" loop></audio>
+<audio id="buffSound" src="assets/starsound.wav"></audio>
+
 <div id="menu">
   <button onclick="startGame()">Oyuna Başla</button>
   <button onclick="showCharacterSelect()">Karakter Seçimi</button>
-  <button onclick="alert('Ayarlar daha eklenmedi')">Ayarlar</button>
+  <button onclick="showSettings()">Ayarlar</button>
 </div>
 
 <div id="character-select" style="display:none">
@@ -43,7 +105,27 @@
   <button onclick="startGame()">Seç ve Oyuna Başla</button>
 </div>
 
-<canvas id="gameCanvas" width="400" height="600"></canvas>
+<div id="settings">
+  <h2>Ayarlar</h2>
+  <div>Ses: <button onclick="toggleSound()"><span id="soundStatus">ON</span></button></div>
+  <div>Müzik: <button onclick="toggleMusic()"><span id="musicStatus">ON</span></button></div>
+  <button onclick="closeSettings()">Geri</button>
+</div>
+
+<div id="pauseMenu">
+  <h1 style="color:white;">Oyun Duraklatıldı</h1>
+  <button onclick="resumeGame()">Oyuna Devam Et</button>
+  <button onclick="exitToMenu()">Oyundan Çık</button>
+</div>
+
+<div id="gameOverScreen" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.85); z-index:13; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+  <h1 style="color:white; font-size:40px;">OYUN BİTTİ</h1>
+  <button onclick="restartGame()" style="margin: 10px; padding: 10px 30px; font-size: 18px;">Yeniden Oyna</button>
+  <button onclick="returnToMenu()" style="margin: 10px; padding: 10px 30px; font-size: 18px;">Ana Menüye Dön</button>
+</div>
+
+
+<canvas id="gameCanvas" width="400" height="600" tabindex="0"></canvas>
 
 <script>
 const characters = [
@@ -52,72 +134,177 @@ const characters = [
   { stand: new Image(), jump: new Image() },
   { stand: new Image(), jump: new Image() }
 ];
-characters[0].stand.src = "assets/character1stand.png";
-characters[0].jump.src  = "assets/character1jump.png";
-characters[1].stand.src = "assets/character2stand.png";
-characters[1].jump.src  = "assets/character2jump.png";
-characters[2].stand.src = "assets/character3stand.png";
-characters[2].jump.src  = "assets/character3jump.png";
-characters[3].stand.src = "assets/character4stand.png";
-characters[3].jump.src  = "assets/character4jump.png";
-
+characters[0].stand.src = "assets/character1stand.png"; characters[0].jump.src = "assets/character1jump.png";
+characters[1].stand.src = "assets/character2stand.png"; characters[1].jump.src = "assets/character2jump.png";
+characters[2].stand.src = "assets/character3stand.png"; characters[2].jump.src = "assets/character3jump.png";
+characters[3].stand.src = "assets/character4stand.png"; characters[3].jump.src = "assets/character4jump.png";
 
 let selectedCharacterIndex = 0;
+let isSoundOn = true;
+let isMusicOn = true;
+let isPaused = false;
+let gameStarted = false;
+let gameOver = false;
+
 function showCharacterSelect() {
   document.getElementById('menu').style.display = 'none';
   document.getElementById('character-select').style.display = 'flex';
 }
 function selectCharacter(index) {
   selectedCharacterIndex = index;
+  
+  // Önce tüm karakterlerden 'selected' sınıfını kaldır
+  const characterOptions = document.querySelectorAll('.character-option');
+  characterOptions.forEach(opt => opt.classList.remove('selected'));
+  
+  // Seçilen karaktere 'selected' sınıfını ekle
+  characterOptions[index].classList.add('selected');
 }
+
+function showSettings() {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('settings').style.display = 'flex';
+}
+function closeSettings() {
+  document.getElementById('settings').style.display = 'none';
+  document.getElementById('menu').style.display = 'flex';
+}
+function toggleSound() {
+  isSoundOn = !isSoundOn;
+  document.getElementById('soundStatus').textContent = isSoundOn ? "ON" : "OFF";
+}
+function toggleMusic() {
+  isMusicOn = !isMusicOn;
+  document.getElementById('musicStatus').textContent = isMusicOn ? "ON" : "OFF";
+  const bgm = document.getElementById('bgm');
+  if (isMusicOn) { bgm.play(); } else { bgm.pause(); bgm.currentTime = 0; }
+}
+
+function resumeGame() {
+  isPaused = false;
+  document.getElementById('pauseMenu').style.display = 'none';
+}
+
+function exitToMenu() {
+  isPaused = false;
+  document.getElementById('pauseMenu').style.display = 'none';
+  document.getElementById('menu').style.display = 'flex';
+  
+  // Oyun durumunu sıfırla
+  gameOver = false;
+  gameStarted = false;
+  
+  // Müziği durdur
+  const bgm = document.getElementById('bgm');
+  bgm.pause();
+  bgm.currentTime = 0;
+  
+  // Oyun ekranını temizle
+  const ctx = document.getElementById('gameCanvas').getContext('2d');
+  ctx.clearRect(0, 0, 400, 600);
+}
+
 function startGame() {
+  // Tüm oyun durumlarını sıfırla
+  isPaused = false;
+  gameOver = false;
+  gameStarted = false;
+  
+  // UI elemanlarını düzenle
   document.getElementById('menu').style.display = 'none';
   document.getElementById('character-select').style.display = 'none';
-
-  // Seçilen karakterin stand ve jump görseli yüklendi mi kontrol et
+  document.getElementById('settings').style.display = 'none';
+  document.getElementById('pauseMenu').style.display = 'none';
+  document.getElementById('gameOverScreen').style.display = 'none';
+  
+  // Seçilen karakteri al
   const current = characters[selectedCharacterIndex];
 
+  // Karakter görselleri yüklendiğinde oyunu başlat
   const checkLoaded = () => {
     if (current.stand.complete && current.jump.complete &&
         current.stand.naturalWidth > 0 && current.jump.naturalWidth > 0) {
+      // Müziği başlat (eğer açıksa)
+      if (isMusicOn) {
+        const bgm = document.getElementById('bgm');
+        bgm.currentTime = 0;
+        bgm.play();
+      }
+      // Oyunu başlat
       initGame();
     } else {
-      setTimeout(checkLoaded, 100); // yüklenmemişse tekrar kontrol et
+      setTimeout(checkLoaded, 100);
     }
   };
-
   checkLoaded();
 }
 
+document.addEventListener('keydown', e => {
+  if (e.code === 'Escape') {
+    if (!isPaused) {
+      isPaused = true;
+      document.getElementById('pauseMenu').style.display = 'flex';
+    }
+  }
+});
+document.getElementById('gameOverScreen').style.display = 'none';
+
+// Oyun kontrol değişkenleri ve event listener referansları için global değişkenler
+let gameKeydownHandler, gameKeyupHandler;
+
+// Global oyun değişkenleri
+let gameAnimationFrameId;
 
 function initGame() {
+  // Önceki animasyon frame'i iptal et
+  if (gameAnimationFrameId) {
+    cancelAnimationFrame(gameAnimationFrameId);
+    gameAnimationFrameId = null;
+  }
+  
+  // Önceki event listener'ları temizle (eğer varsa)
+  if (gameKeydownHandler) {
+    document.removeEventListener('keydown', gameKeydownHandler);
+  }
+  if (gameKeyupHandler) {
+    document.removeEventListener('keyup', gameKeyupHandler);
+  }
+  
+  // Oyun değişkenlerini sıfırla
+  gameStarted = false;
+  gameOver = false;
+  isPaused = false;
+
   const canvas = document.getElementById('gameCanvas');
+  canvas.focus();
   const ctx = canvas.getContext('2d');
   const width = canvas.width, height = canvas.height;
+
   const player = { width: 40, height: 50, x: 0, y: 0, vy: 0 };
   const moveSpeed = 4, jumpSpeed = 12, gravity = 0.5;
-  let onPlatform = false;
-  let platforms = [];
+  let onPlatform = false, scrollSpeed = 0;
+  const baseScrollSpeed = 1.4;
+  let currentThemeLevel = 0;
+
   const platformHeight = 10;
   const platformMinWidth = 80, platformMaxWidth = 100;
   const platformGapMin = 80, platformGapMax = 120;
   const movingPlatformChance = 0.2, movingPlatformSpeed = 1;
   const platformMargin = 30;
-  let scrollOffset = 0;
-  let gameStarted = false;
-  let scrollSpeed = 0;
-  const baseScrollSpeed = 1.4;
-  const scrollSpeedIncreaseInterval = 60000;
-  let lastScrollIncrease = 0;
 
+  // Platformları oluştur
+  let platforms = [];
   const basePlatform = {
     x: width / 2 - 50, y: height - 20,
     width: 100, height: platformHeight,
     vx: 0, color: '#fff'
   };
   platforms.push(basePlatform);
+  
+  // Oyuncuyu başlangıç konumuna yerleştir
   player.x = basePlatform.x + basePlatform.width / 2 - player.width / 2;
   player.y = basePlatform.y - player.height;
+  player.vy = 0; // Dikey hızı sıfırla
   onPlatform = true;
 
   let yPos = basePlatform.y;
@@ -131,87 +318,214 @@ function initGame() {
     platforms.push({ x: px, y: yPos, width: pw, height: platformHeight, vx, color: '#fff' });
   }
 
+  const backgroundImages = [];
+  for (let i = 1; i <= 4; i++) {
+    const img = new Image();
+    img.src = `assets/Unknown-${i}.jpeg`;
+    backgroundImages.push(img);
+  }
+
+  // Buff görselleri
+  const buffImages = [
+    new Image(), // winter1.png - Tema 1 için
+    new Image(), // futuristic1.png - Tema 2 için
+    new Image(), // forest1.png - Tema 3 için
+    new Image()  // space1.png - Tema 4 için
+  ];
+  buffImages[0].src = "assets/winter1.png";
+  buffImages[1].src = "assets/futuristic1.png";
+  buffImages[2].src = "assets/forest1.png";
+  buffImages[3].src = "assets/space1.png";
+  
+  let buff = null;
+  let lastBuffTime = 0;
+  const buffRespawnDelay = 10000;
+
+  function maybeSpawnBuff() {
+    const now = Date.now();
+    if (buff !== null || now - lastBuffTime < buffRespawnDelay) return;
+    
+    // Tema 2'de (score 300-800 arası) buff oluşturmayı durdurma koşulunu kaldırdık
+    
+    const candidatePlatforms = platforms.filter(p =>
+      p.y < player.y - 50 && p.y > 0 && p.y < height - 100
+    );
+
+    if (candidatePlatforms.length === 0) return;
+
+    const spawnPlatform = candidatePlatforms[Math.floor(Math.random() * candidatePlatforms.length)];
+    
+    // Mevcut tema seviyesine göre buff türünü belirle
+    const currentLevel = getCurrentThemeLevel(score);
+    let buffType = 0;
+    
+    if (currentLevel <= 0) {
+      buffType = 0; // Tema 1 için winter1.png
+    } else if (currentLevel === 1) {
+      buffType = 1; // Tema 2 için futuristic1.png
+    } else if (currentLevel === 2) {
+      buffType = 2; // Tema 3 için forest1.png
+    } else {
+      buffType = 3; // Tema 4 için space1.png
+    }
+    
+    buff = {
+      platform: spawnPlatform,
+      offsetX: spawnPlatform.width / 2 - 15,
+      offsetY: -30,
+      width: 30,
+      height: 30,
+      type: buffType // Buff türünü kaydet
+    };
+    lastBuffTime = now;
+  }
+
   let leftPressed = false, rightPressed = false;
-  document.addEventListener('keydown', function(e) {
+  
+  // Event listener'ları oluştur ve referanslarını sakla
+  gameKeydownHandler = e => {
     if (e.code === 'ArrowLeft' || e.code === 'KeyA') leftPressed = true;
     if (e.code === 'ArrowRight' || e.code === 'KeyD') rightPressed = true;
     if ((e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') && onPlatform) {
       player.vy = -jumpSpeed;
       onPlatform = false;
+      if (isSoundOn) {
+        const jumpSound = document.getElementById('jumpSound');
+        jumpSound.currentTime = 0;
+        jumpSound.play();
+      }
+      // Oyun başlamadıysa başlat ve scroll hızını ayarla
       if (!gameStarted) {
         gameStarted = true;
         scrollSpeed = baseScrollSpeed;
-        lastScrollIncrease = Date.now();
       }
     }
-  });
-  document.addEventListener('keyup', function(e) {
+  };
+
+  gameKeyupHandler = e => {
     if (e.code === 'ArrowLeft' || e.code === 'KeyA') leftPressed = false;
     if (e.code === 'ArrowRight' || e.code === 'KeyD') rightPressed = false;
-  });
+  };
+  
+  // Event listener'ları ekle
+  document.addEventListener('keydown', gameKeydownHandler);
+  document.addEventListener('keyup', gameKeyupHandler);
 
-  let startTime = Date.now(), score = 0, timer = 0, gameOver = false;
-  const backgroundImages = [];
-  for (let i = 1; i <= 4; i++) {
-    const img = new Image();
-    img.src = `Unknown-${i}.jpeg`;
-    backgroundImages.push(img);
-  }
-
-  function getCurrentBackgroundImage() {
-    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    if (elapsed < 60) return backgroundImages[0];
-    if (elapsed < 120) return backgroundImages[1];
-    if (elapsed < 180) return backgroundImages[2];
-    return backgroundImages[3];
-  }
+  let startTime = Date.now(), score = 0, timer = 0;
+  let passedPlatforms = new Set();
+  let baseScore = 0;
+  let bonusScore = 0;
 
   function update() {
     if (gameOver) return;
+
+    // Oyuncu hareketi
     if (leftPressed) player.x -= moveSpeed;
     if (rightPressed) player.x += moveSpeed;
     player.x = Math.max(0, Math.min(width - player.width, player.x));
+    
+    // Yerçekimi ve dikey hareket
     player.vy += gravity;
     player.y += player.vy;
     onPlatform = false;
 
+    // Platform üzerinde durup durmadığını kontrol et
+    let isOnAnyPlatform = false;
     for (const p of platforms) {
-      const horizontalCollision = player.x + player.width > p.x && player.x < p.x + p.width;
-      const isLanding = player.vy >= 0 && player.y + player.height >= p.y && player.y + player.height <= p.y + platformHeight + 5;
-      if (horizontalCollision && isLanding) {
+      const collX = player.x + player.width > p.x && player.x < p.x + p.width;
+      const land = player.vy >= 0 && player.y + player.height >= p.y && player.y + player.height <= p.y + platformHeight + 5;
+      if (collX && land) {
         player.y = p.y - player.height;
         player.vy = 0;
         onPlatform = true;
+        isOnAnyPlatform = true;
+        if (!passedPlatforms.has(p)) {
+          passedPlatforms.add(p);
+          baseScore = (passedPlatforms.size - 1) * 10;
+        }
         break;
       }
     }
 
     if (gameStarted) {
-      const now = Date.now();
-      const scrollAmount = scrollSpeed;
-      player.y += scrollAmount;
-      platforms.forEach(p => p.y += scrollAmount);
-      scrollOffset += scrollAmount;
-      if (now - lastScrollIncrease >= scrollSpeedIncreaseInterval) {
-        scrollSpeed += 0.5;
-        lastScrollIncrease = now;
+      // Sadece oyun başladığında ekranı kaydır
+      player.y += scrollSpeed;
+      platforms.forEach(p => p.y += scrollSpeed);
+      
+      // Oyuncu ekranın altına düştüğünde oyun biter
+      if (player.y > height) {
+        gameOver = true;
       }
-      if (player.y > height) gameOver = true;
     }
 
-    for (const p of platforms) {
+    platforms.forEach(p => {
       if (p.vx !== 0) {
         p.x += p.vx;
-        if (p.x < platformMargin || p.x + p.width > width - platformMargin) {
-          p.vx *= -1;
+        if (p.x < platformMargin || p.x + p.width > width - platformMargin) p.vx *= -1;
+      }
+    });
+
+    platforms = platforms.filter(p => p.y < height + 200);
+    generateNewPlatforms();
+
+    maybeSpawnBuff();
+
+    if (buff) {
+      const buffX = buff.platform.x + buff.offsetX;
+      const buffY = buff.platform.y + buff.offsetY;
+
+      const isColliding =
+        player.x < buffX + buff.width &&
+        player.x + player.width > buffX &&
+        player.y < buffY + buff.height &&
+        player.y + player.height > buffY;
+
+      if (isColliding) {
+        // Buff türüne göre farklı puan ver
+        if (buff.type === 0) {
+          // Tema 1 buff'ı - winter1.png
+          bonusScore += 30;
+        } else if (buff.type === 1) {
+          // Tema 2 buff'ı - futuristic1.png
+          bonusScore += 60;
+        } else if (buff.type === 2) {
+          // Tema 3 buff'ı - forest1.png
+          bonusScore += 100;
+        } else {
+          // Tema 4 buff'ı - space1.png
+          bonusScore += 200;
+        }
+        
+        buff = null;
+
+        if (isSoundOn) {
+          const buffSound = document.getElementById('buffSound');
+          buffSound.currentTime = 0;
+          buffSound.play();
         }
       }
     }
 
-    platforms = platforms.filter(p => p.y < height + 200);
-    generateNewPlatforms();
-    score = Math.floor(scrollOffset);
+    score = baseScore + bonusScore;
     timer = Math.floor((Date.now() - startTime) / 1000);
+
+    const newLevel = getCurrentThemeLevel(score);
+    if (newLevel > currentThemeLevel) {
+      scrollSpeed += 0.3 * (newLevel - currentThemeLevel);
+      currentThemeLevel = newLevel;
+    }
+  }
+
+  function getCurrentThemeLevel(score) {
+    if (score < 300) return 0;
+    if (score < 800) return 1;
+    if (score < 1500) return 2;
+    return 3;
+  }
+
+  function getCurrentBackgroundImage() {
+    const level = getCurrentThemeLevel(score);
+    return backgroundImages[level];
   }
 
   function draw() {
@@ -219,15 +533,26 @@ function initGame() {
     if (bg.complete) ctx.drawImage(bg, 0, 0, width, height);
     else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, width, height); }
 
-    const useJumpImage = !onPlatform || player.vy < -2;
     const currentCharacter = characters[selectedCharacterIndex];
-    const playerImg = useJumpImage ? currentCharacter.jump : currentCharacter.stand;
-    if (playerImg.complete) ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+    const useJump = !onPlatform || player.vy < -2;
+    const img = useJump ? currentCharacter.jump : currentCharacter.stand;
+    if (img.complete) ctx.drawImage(img, player.x, player.y, player.width, player.height);
     else { ctx.fillStyle = '#0f0'; ctx.fillRect(player.x, player.y, player.width, player.height); }
 
-    for (const p of platforms) {
+    platforms.forEach(p => {
       ctx.fillStyle = p.color;
       ctx.fillRect(p.x, p.y, p.width, p.height);
+    });
+
+    if (buff) {
+      const buffX = buff.platform.x + buff.offsetX;
+      const buffY = buff.platform.y + buff.offsetY;
+      
+      // Buff türüne göre doğru görseli kullan
+      const buffImg = buffImages[buff.type];
+      if (buffImg.complete) {
+        ctx.drawImage(buffImg, buffX, buffY, buff.width, buff.height);
+      }
     }
 
     ctx.fillStyle = '#fff';
@@ -236,36 +561,93 @@ function initGame() {
     ctx.fillText('Süre: ' + timer, 10, 40);
 
     if (gameOver) {
-      ctx.fillStyle = 'red';
-      ctx.font = '40px monospace';
-      ctx.fillText('OYUN BİTTİ', width / 2 - 100, height / 2);
-    }
+  document.getElementById('gameOverScreen').style.display = 'flex';
+  // Müziği durdur
+  if (isMusicOn) {
+    const bgm = document.getElementById('bgm');
+    bgm.pause();
+  }
+}
+
   }
 
   function generateNewPlatforms() {
     if (platforms.length === 0) return;
-    let highestPlatform = platforms.reduce((prev, curr) => prev.y < curr.y ? prev : curr);
-    while (highestPlatform.y > -1000) {
+    let highest = platforms.reduce((a, b) => a.y < b.y ? a : b);
+    while (highest.y > -1000) {
       const gap = Math.min(Math.random() * (platformGapMax - platformGapMin) + platformGapMin, 140);
-      const newY = highestPlatform.y - gap;
+      const newY = highest.y - gap;
       const pw = Math.random() * (platformMaxWidth - platformMinWidth) + platformMinWidth;
       const px = Math.random() * (width - pw - 2 * platformMargin) + platformMargin;
       const moving = Math.random() < movingPlatformChance;
       const vx = moving ? (Math.random() * 2 - 1) * movingPlatformSpeed : 0;
       platforms.push({ x: px, y: newY, width: pw, height: platformHeight, vx, color: '#fff' });
-      highestPlatform = { y: newY };
+      highest = { y: newY };
     }
   }
 
   function gameLoop() {
-    update();
-    draw();
-    if (!gameOver) requestAnimationFrame(gameLoop);
+    gameAnimationFrameId = requestAnimationFrame(gameLoop);
+    if (!gameOver && !isPaused) {
+      update();
+      draw();
+    } else {
+      draw(); // ESC veya oyun sonu için
+    }
   }
-
+  
+  // Oyun döngüsünü başlat
   gameLoop();
 }
-</script>
+function restartGame() {
+  // Oyun sonu ekranını gizle
+  document.getElementById('gameOverScreen').style.display = 'none';
 
+  // Oyun durumunu tamamen sıfırla
+  gameOver = false;
+  isPaused = false;
+  gameStarted = false;
+  
+  // Animasyon frame'i iptal et
+  if (gameAnimationFrameId) {
+    cancelAnimationFrame(gameAnimationFrameId);
+    gameAnimationFrameId = null;
+  }
+  
+  // Müziği durdur ve yeniden başlat
+  const bgm = document.getElementById('bgm');
+  bgm.pause();
+  bgm.currentTime = 0;
+  
+  // Yeni oyun için startGame() çağır (mevcut seçili karakterle başlatmak için)
+  startGame();
+}
+
+function returnToMenu() {
+  document.getElementById('gameOverScreen').style.display = 'none';
+
+  // Oyunla ilgili tüm durumları sıfırla
+  isPaused = false;
+  gameOver = false;
+  gameStarted = false;
+
+  // Müziği durdur
+  const bgm = document.getElementById('bgm');
+  bgm.pause();
+  bgm.currentTime = 0;
+
+  // Arayüzleri düzenle
+  document.getElementById('menu').style.display = 'flex';
+  document.getElementById('character-select').style.display = 'none';
+  document.getElementById('settings').style.display = 'none';
+  document.getElementById('pauseMenu').style.display = 'none';
+
+  // Oyun ekranını temizle
+  const ctx = document.getElementById('gameCanvas').getContext('2d');
+  ctx.clearRect(0, 0, 400, 600);
+}
+
+
+</script>
 </body>
 </html>
