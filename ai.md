@@ -1,4 +1,4 @@
-ChatGPT conversations require a Plus subscription to view since they were created with the Plus version, which was also used for generating images. Prompts for these designs were obtained from Grok.
+Chat GPT sohbetleri Plus versiyonu olduğundan görüntüleyebilmek için plus versiyonu gerekiyor. Plusla görseller oluşturuldu ve bu tasarımlar için grok'tan promptlar alındı.
 
 - [ChatGPT Conversation 1](https://chatgpt.com/c/682de56e-46cc-800b-9a02-021629546b95)
 - [ChatGPT Conversation 2](https://chatgpt.com/c/682ec9bf-4c20-800b-8982-26fa31256f07)
