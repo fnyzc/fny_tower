@@ -1,5 +1,7 @@
 # Icy Tower Karakter Seçimi - Oyun Analizi
 
+- [Oyun Linki](https://fnyzc.github.io/fny_tower/)
+
 ## Genel Bilgi
 "Icy Tower Karakter Seçimi" oyunu, klasik Icy Tower oyunundan esinlenilmiş bir tarayıcı tabanlı platform oyunudur. Oyuncunun amacı, seçtiği karakterle sürekli yukarı doğru zıplayarak platformlar arasında ilerlemek ve en yüksek skoru elde etmektir. Oyun, HTML5 Canvas ve JavaScript kullanılarak geliştirilmiştir ve görsel olarak çekici bir arayüze sahiptir. Oyuncular, farklı karakterler seçebilir, platformlar arasında hareket edebilir ve buff/debuff öğeleriyle oyun deneyimini zenginleştirebilir. Oyun, ana menü, karakter seçimi, ayarlar, yüksek skorlar ve nasıl oynanır ekranları gibi çeşitli kullanıcı arayüzü bileşenleri içerir. Arka plan müzikleri ve ses efektleri, oyun atmosferini desteklerken, yerel depolama (localStorage) kullanılarak yüksek skorlar kaydedilir.
 
