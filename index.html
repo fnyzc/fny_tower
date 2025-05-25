@@ -15,8 +15,8 @@
   align-items: center;
   flex-direction: column;
   background: url("assets/background1.png") no-repeat center center;
-  background-size: contain; /* Görselin tamamı sığacak şekilde */
-  background-color: black;  /* Görsel kenarlarında boşluk kalırsa siyah göster */
+  background-size: contain; 
+  background-color: black;  
   z-index: 10;
   color: white;
 }
@@ -30,8 +30,8 @@
   align-items: center;
   flex-direction: column;
   background: url("assets/background2.png") no-repeat center center;
-  background-size: contain; /* Görselin tamamı sığacak şekilde */
-  background-color: black;  /* Görsel kenarlarında boşluk kalırsa siyah göster */
+  background-size: contain; 
+  background-color: black; 
   z-index: 10;
   color: white;
 }
@@ -94,6 +94,22 @@ button {
   <button onclick="showCharacterSelect()">Karakter Seçimi</button>
   <button onclick="showSettings()">Ayarlar</button>
   <button onclick="showHighScores()">Yüksek Skorlar</button>
+  <button onclick="showHowToPlay()">Nasıl Oynanır?</button>
+</div>
+
+
+
+<div id="howToPlayScreen" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background: url('assets/background1.png') no-repeat center center; background-size: contain; background-color: black; z-index:13; flex-direction:column; align-items:center; justify-content:center; color:white; text-align:center; padding: 20px;">
+  <h1 style="font-size:36px; margin-bottom:20px;">Nasıl Oynanır?</h1>
+  <p style="font-size:18px; max-width:80%; margin:auto;">
+    Oyuncunuzu seçin ve zıplayarak yukarı doğru ilerleyin.<br><br>
+    <strong>Yön Tuşları (← →)</strong> ile sola/sağa hareket edin.<br>
+    <strong>Boşluk / ↑ / W</strong> tuşu ile zıplayın.<br><br>
+    Platformlardan düşmemeye çalışın!<br>
+    Farklı temalara geçiş yaparken kayma hızı artar.<br>
+    Buff’lar ve debuff'larla oyun deneyiminiz daha keyifli hale gelir.<br>
+  </p>
+  <button onclick="backToMenuFromHowToPlay()" style="margin-top:30px; padding: 10px 30px; font-size: 18px;">Geri</button>
 </div>
 
 <div id="character-select" style="display:none">
@@ -117,7 +133,6 @@ button {
 <div id="highScoresScreen" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background: url('assets/background1.png') no-repeat center center; background-size: contain; background-color: black; z-index:13; flex-direction:column; align-items:center; justify-content:center;">
   <h1 style="color:white; font-size:40px;">YÜKSEK SKORLAR</h1>
   <div id="highScoresList" style="color:white; font-size:18px; margin:20px; text-align:center; width:80%; max-height:300px; overflow-y:auto;">
-    <!-- Yüksek skorlar buraya eklenecek -->
   </div>
   <button onclick="backToMainMenu()" style="margin: 10px; padding: 10px 30px; font-size: 18px;">Ana Menüye Dön</button>
 </div>
@@ -160,7 +175,7 @@ let isPaused = false;
 let gameStarted = false;
 let gameOver = false;
 
-// Yüksek skor için değişkenler
+
 let highScore = 0;
 try {
   const storedVal = localStorage.getItem('highScore');
@@ -172,27 +187,24 @@ try {
   }
 } catch (e) {
   console.error("Error reading highScore from localStorage:", e);
-  // highScore remains 0
+  
 }
-
-// Yüksek skorlar listesi için değişkenler
 let highScores = [];
 try {
   const storedList = localStorage.getItem('highScores');
   if (storedList !== null) {
     const parsedList = JSON.parse(storedList);
     if (Array.isArray(parsedList)) {
-      // Filter for valid score objects to prevent sort errors
+      
       highScores = parsedList.filter(item => 
         typeof item === 'object' && item !== null && 
         typeof item.score === 'number' && 
-        typeof item.date === 'string' // Ensure date is also a string, as expected
+        typeof item.date === 'string'
       );
     }
   }
 } catch (e) {
   console.error("Error reading highScores from localStorage:", e);
-  // highScores remains []
 }
 
 const MAX_HIGH_SCORES = 1;
@@ -204,11 +216,9 @@ function showCharacterSelect() {
 function selectCharacter(index) {
   selectedCharacterIndex = index;
   
-  // Önce tüm karakterlerden 'selected' sınıfını kaldır
   const characterOptions = document.querySelectorAll('.character-option');
   characterOptions.forEach(opt => opt.classList.remove('selected'));
-  
-  // Seçilen karaktere 'selected' sınıfını ekle
+ 
   characterOptions[index].classList.add('selected');
 }
 
@@ -225,8 +235,6 @@ function showHighScores() {
   document.getElementById('menu').style.display = 'none';
   document.getElementById('highScoresScreen').style.display = 'flex';
 
-  
-  // Yüksek skorlar listesini güncelle
   updateHighScoresList();
 }
 
@@ -235,7 +243,6 @@ function closeHighScores() {
   document.getElementById('menu').style.display = 'flex';
 }
 
-// Ana menüye dönme fonksiyonu
 function backToMainMenu() {
   document.getElementById('highScoresScreen').style.display = 'none';
   document.getElementById('menu').style.display = 'flex';
@@ -246,11 +253,21 @@ function backToMenuFromCharacterSelect() {
   document.getElementById('menu').style.display = 'flex';
 }
 
+function showHowToPlay() {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('howToPlayScreen').style.display = 'flex';
+}
+
+function backToMenuFromHowToPlay() {
+  document.getElementById('howToPlayScreen').style.display = 'none';
+  document.getElementById('menu').style.display = 'flex';
+}
+
+
 function updateHighScoresList() {
   const highScoresListDiv = document.getElementById('highScoresList');
   highScoresListDiv.innerHTML = '';
   
-  // Ensure highScores is a valid, filterable array before proceeding
   const currentHighScores = Array.isArray(highScores) ? highScores : [];
 
   if (currentHighScores.length === 0) {
@@ -258,10 +275,10 @@ function updateHighScoresList() {
     return;
   }
   
-  // Skorları puana göre sırala (büyükten küçüğe) - This sorts the global array
+
   currentHighScores.sort((a, b) => b.score - a.score);
   
-  // Her bir skoru listele
+
   currentHighScores.forEach((scoreData, index) => {
     const scoreElement = document.createElement('div');
     scoreElement.style.margin = '10px';
@@ -296,22 +313,19 @@ function exitToMenu() {
   document.getElementById('pauseMenu').style.display = 'none';
   document.getElementById('menu').style.display = 'flex';
   
-  // Oyun durumunu sıfırla
   gameOver = false;
   gameStarted = false;
   
-  // Müziği durdur
   const bgm = document.getElementById('bgm');
   bgm.pause();
   bgm.currentTime = 0;
-  
-  // Oyun ekranını temizle
+
   const ctx = document.getElementById('gameCanvas').getContext('2d');
   ctx.clearRect(0, 0, 400, 600);
 }
 
 function startGame() {
-  // Yüksek skoru kontrol et (eğer local storage'da değişiklik olduysa)
+
   try {
   const storedVal = parseInt(localStorage.getItem('highScore'));
   highScore = !isNaN(storedVal) ? storedVal : 0;
@@ -319,33 +333,28 @@ function startGame() {
   highScore = 0;
 }
 
-  
-  // Tüm oyun durumlarını sıfırla
   isPaused = false;
   gameOver = false;
   gameStarted = false;
 
-  // UI elemanlarını düzenle
   document.getElementById('menu').style.display = 'none';
   document.getElementById('character-select').style.display = 'none';
   document.getElementById('settings').style.display = 'none';
   document.getElementById('pauseMenu').style.display = 'none';
   document.getElementById('gameOverScreen').style.display = 'none';
-  
-  // Seçilen karakteri al
+
   const current = characters[selectedCharacterIndex];
 
-  // Karakter görselleri yüklendiğinde oyunu başlat
   const checkLoaded = () => {
     if (current.stand.complete && current.jump.complete &&
         current.stand.naturalWidth > 0 && current.jump.naturalWidth > 0) {
-      // Müziği başlat (eğer açıksa)
+      
       if (isMusicOn) {
         const bgm = document.getElementById('bgm');
         bgm.currentTime = 0;
         bgm.play();
       }
-      // Oyunu başlat
+     
       initGame();
     } else {
       setTimeout(checkLoaded, 100);
@@ -364,26 +373,20 @@ document.addEventListener('keydown', e => {
 });
 document.getElementById('gameOverScreen').style.display = 'none';
 
-// Sayfa yüklendiğinde yüksek skorları göster
 window.onload = function() {
-  // Yüksek skorlar listesini güncelle
   updateHighScoresList();
 };
 
-// Oyun kontrol değişkenleri ve event listener referansları için global değişkenler
 let gameKeydownHandler, gameKeyupHandler;
 
-// Global oyun değişkenleri
 let gameAnimationFrameId;
 
 function initGame() {
-  // Önceki animasyon frame'i iptal et
   if (gameAnimationFrameId) {
     cancelAnimationFrame(gameAnimationFrameId);
     gameAnimationFrameId = null;
   }
   
-  // Önceki event listener'ları temizle (eğer varsa)
   if (gameKeydownHandler) {
     document.removeEventListener('keydown', gameKeydownHandler);
   }
@@ -391,7 +394,6 @@ function initGame() {
     document.removeEventListener('keyup', gameKeyupHandler);
   }
   
-  // Oyun değişkenlerini sıfırla
   gameStarted = false;
   gameOver = false;
   isPaused = false;
@@ -403,12 +405,12 @@ function initGame() {
 
   const player = { width: 40, height: 50, x: 0, y: 0, vy: 0, vx: 0 };
   const moveSpeed = 4, jumpSpeed = 12, gravity = 0.5;
-  const wallJumpVSpeed = jumpSpeed; // Vertical speed for wall jump
-  const wallJumpHSpeed = moveSpeed * 1.5; // Horizontal speed boost from wall jump
-  const autoWallBounceVSpeed = jumpSpeed * 0.8; // Slightly less vertical for auto bounce
-  const autoWallBounceHSpeed = moveSpeed * 1.2; // Slightly less horizontal for auto bounce
-  const wallSlideFriction = 0.85; // Factor to slow down fall speed during wall slide
-  const airFriction = 0.9; // Factor for horizontal velocity decay in air
+  const wallJumpVSpeed = jumpSpeed; 
+  const wallJumpHSpeed = moveSpeed * 1.5; 
+  const autoWallBounceVSpeed = jumpSpeed * 0.8; 
+  const autoWallBounceHSpeed = moveSpeed * 1.2; 
+  const wallSlideFriction = 0.85; 
+  const airFriction = 0.9;
 
   let onPlatform = false, scrollSpeed = 0;
   const baseScrollSpeed = 1.4;
@@ -453,7 +455,6 @@ function initGame() {
     backgroundImages.push(img);
   }
 
-  // Platform theme images
   const platformThemeImages = [];
   const platformImageFilenames = ["theme1.png", "theme2.png", "theme3.png", "theme4.png"];
   for (let i = 0; i < platformImageFilenames.length; i++) {
@@ -462,12 +463,12 @@ function initGame() {
     platformThemeImages.push(img);
   }
 
-  // Buff görselleri
+
   const buffImages = [
-    new Image(), // winter1.png - Tema 1 için
-    new Image(), // futuristic1.png - Tema 2 için
-    new Image(), // forest1.png - Tema 3 için
-    new Image()  // space1.png - Tema 4 için
+    new Image(), // winter1.png
+    new Image(), // futuristic1.png 
+    new Image(), // forest1.png
+    new Image()  // space1.png 
   ];
   buffImages[0].src = "assets/winter1.png";
   buffImages[1].src = "assets/futuristic1.png";
@@ -483,16 +484,14 @@ function initGame() {
 
   let activeDebuff = null;
   let lastDebuffSpawnTime = 0;
-  const debuffRespawnDelay = 15000; // Debuffs might spawn a bit less frequently than buffs
-  const reverseControlsDuration = 5000; // 5 seconds
+  const debuffRespawnDelay = 15000; 
+  const reverseControlsDuration = 5000; 
   let controlsReversed = false;
   let reverseControlsStartTime = 0;
 
   function maybeSpawnBuff() {
     const now = Date.now();
     if (buff !== null || now - lastBuffTime < buffRespawnDelay) return;
-    
-    // Tema 2'de (score 300-800 arası) buff oluşturmayı durdurma koşulunu kaldırdık
     
     const candidatePlatforms = platforms.filter(p =>
       p.y < player.y - 50 && p.y > 0 && p.y < height - 100
@@ -502,18 +501,17 @@ function initGame() {
 
     const spawnPlatform = candidatePlatforms[Math.floor(Math.random() * candidatePlatforms.length)];
     
-    // Mevcut tema seviyesine göre buff türünü belirle
     const currentLevel = getCurrentThemeLevel(score);
     let buffType = 0;
     
     if (currentLevel <= 0) {
-      buffType = 0; // Tema 1 buff'ı - winter1.png
+      buffType = 0; // Tema 1 buff'ı 
     } else if (currentLevel === 1) {
-      buffType = 1; // Tema 2 buff'ı - futuristic1.png
+      buffType = 1; // Tema 2 buff'ı 
     } else if (currentLevel === 2) {
-      buffType = 2; // Tema 3 buff'ı - forest1.png
+      buffType = 2; // Tema 3 buff'ı 
     } else {
-      buffType = 3; // Tema 4 buff'ı - space1.png
+      buffType = 3; // Tema 4 buff'ı 
     }
     
     buff = {
@@ -522,7 +520,7 @@ function initGame() {
       offsetY: -30,
       width: 30,
       height: 30,
-      type: buffType // Buff türünü kaydet
+      type: buffType 
     };
     lastBuffTime = now;
   }
@@ -532,7 +530,7 @@ function initGame() {
     if (activeDebuff !== null || now - lastDebuffSpawnTime < debuffRespawnDelay) return;
 
     const candidatePlatforms = platforms.filter(p =>
-      p.y < player.y - 70 && p.y > 0 && p.y < height - 120 // Ensure debuff doesn't spawn too close or off-screen
+      p.y < player.y - 70 && p.y > 0 && p.y < height - 120 
     );
 
     if (candidatePlatforms.length === 0) return;
@@ -541,7 +539,7 @@ function initGame() {
     
     activeDebuff = {
       platform: spawnPlatform,
-      offsetX: spawnPlatform.width / 2 - 15, // Assuming debuff image is 30x30 like buffs
+      offsetX: spawnPlatform.width / 2 - 15,
       offsetY: -30,
       width: 30,
       height: 30,
@@ -552,29 +550,29 @@ function initGame() {
 
   let leftPressed = false, rightPressed = false;
   
-  // Event listener'ları oluştur ve referanslarını sakla
+  
   gameKeydownHandler = e => {
     if (e.code === 'ArrowLeft' || e.code === 'KeyA') leftPressed = true;
     if (e.code === 'ArrowRight' || e.code === 'KeyD') rightPressed = true;
     if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') {
       let didJump = false;
-      if (onPlatform) { // Regular jump
+      if (onPlatform) { 
         player.vy = -jumpSpeed;
         onPlatform = false;
-        jumpedFromPlatform = true; // Set for auto bounce check
-        hasAutoBounced = false;   // Reset auto bounce status
-        canWallJump = true; // Reset wall jump ability on platform jump
+        jumpedFromPlatform = true; 
+        hasAutoBounced = false;   
+        canWallJump = true; 
         didJump = true;
-      } else if (isTouchingWall && canWallJump) { // Wall jump
+      } else if (isTouchingWall && canWallJump) { 
         player.vy = -wallJumpVSpeed;
         if (wallSide === 'left') {
-          player.vx = wallJumpHSpeed; // Push away from left wall
+          player.vx = wallJumpHSpeed;
         } else if (wallSide === 'right') {
-          player.vx = -wallJumpHSpeed; // Push away from right wall
+          player.vx = -wallJumpHSpeed; 
         }
-        jumpedFromPlatform = false; // Manual wall jump overrides auto bounce
+        jumpedFromPlatform = false; 
         hasAutoBounced = false;
-        canWallJump = false; // Consume manual wall jump ability
+        canWallJump = false; 
         didJump = true;
       }
 
@@ -584,7 +582,7 @@ function initGame() {
           jumpSound.currentTime = 0;
           jumpSound.play();
         }
-        // Oyun başlamadıysa başlat ve scroll hızını ayarla
+       
         if (!gameStarted) {
           gameStarted = true;
           scrollSpeed = baseScrollSpeed;
@@ -598,7 +596,7 @@ function initGame() {
     if (e.code === 'ArrowRight' || e.code === 'KeyD') rightPressed = false;
   };
   
-  // Event listener'ları ekle
+  
   document.addEventListener('keydown', gameKeydownHandler);
   document.addEventListener('keyup', gameKeyupHandler);
 
@@ -607,21 +605,21 @@ function initGame() {
   let baseScore = 0;
   let bonusScore = 0;
 
-  let isTouchingWall = false; // Added for wall jump state
-  let wallSide = null; // Added for wall jump state ('left' or 'right')
-  let jumpedFromPlatform = false; // For auto wall bounce
-  let hasAutoBounced = false; // To ensure auto bounce happens only once per jump
-  let canWallJump = true; // Player can perform a manual wall jump
+  let isTouchingWall = false; 
+  let wallSide = null; 
+  let jumpedFromPlatform = false; 
+  let hasAutoBounced = false; 
+  let canWallJump = true; 
 
   function update() {
     if (gameOver) return;
 
-    // Handle Reversed Controls Timer
+    
     if (controlsReversed && Date.now() - reverseControlsStartTime > reverseControlsDuration) {
       controlsReversed = false;
     }
 
-    // Horizontal input and movement
+    
     let currentLeftPressed = leftPressed;
     let currentRightPressed = rightPressed;
 
@@ -632,24 +630,23 @@ function initGame() {
 
     if (currentLeftPressed) {
       player.vx = -moveSpeed;
-      jumpedFromPlatform = false; // Player took control, cancel auto bounce
+      jumpedFromPlatform = false; 
     } else if (currentRightPressed) {
       player.vx = moveSpeed;
-      jumpedFromPlatform = false; // Player took control, cancel auto bounce
+      jumpedFromPlatform = false; 
     } else {
-      // If no active horizontal input, let current vx decay (e.g., from a wall jump)
+      
       player.vx *= airFriction; 
-      if (Math.abs(player.vx) < 0.1) player.vx = 0; // Stop if very slow
+      if (Math.abs(player.vx) < 0.1) player.vx = 0; 
     }
     player.x += player.vx;
-    player.x = Math.max(0, Math.min(width - player.width, player.x)); // Clamp x
+    player.x = Math.max(0, Math.min(width - player.width, player.x)); 
     
-    // Yerçekimi ve dikey hareket
     player.vy += gravity;
     player.y += player.vy;
     onPlatform = false;
 
-    // Platform üzerinde durup durmadığını kontrol et
+    // Platform üzerinde durup durmadığı kontrolü
     let isOnAnyPlatform = false;
     for (const p of platforms) {
       const collX = player.x + player.width > p.x && player.x < p.x + p.width;
@@ -659,9 +656,9 @@ function initGame() {
         player.vy = 0;
         onPlatform = true;
         isOnAnyPlatform = true;
-        canWallJump = true; // Regain manual wall jump ability upon landing
-        jumpedFromPlatform = false; // Reset on landing
-        hasAutoBounced = false;    // Reset on landing
+        canWallJump = true; 
+        jumpedFromPlatform = false; 
+        hasAutoBounced = false; 
         if (!passedPlatforms.has(p)) {
           passedPlatforms.add(p);
           baseScore = (passedPlatforms.size - 1) * 10;
@@ -670,30 +667,28 @@ function initGame() {
       }
     }
 
-    // Wall detection (after platform collision and x clamping)
     isTouchingWall = false;
     wallSide = null;
-    if (!onPlatform) { // Only check for wall touch if in air
-      if (player.x <= 0) { // Touched left wall
+    if (!onPlatform) { 
+      if (player.x <= 0) {
         isTouchingWall = true;
         wallSide = 'left';
-      } else if (player.x >= width - player.width) { // Touched right wall
+      } else if (player.x >= width - player.width) { 
         isTouchingWall = true;
         wallSide = 'right';
       }
     }
 
-    // Automatic wall bounce if jumped from platform and hits wall without directional input
+   
     if (jumpedFromPlatform && !hasAutoBounced && isTouchingWall && !onPlatform) {
       player.vy = -autoWallBounceVSpeed;
       if (wallSide === 'left') {
-        player.vx = autoWallBounceHSpeed; // Bounce away from left wall
+        player.vx = autoWallBounceHSpeed; 
       } else if (wallSide === 'right') {
-        player.vx = -autoWallBounceHSpeed; // Bounce away from right wall
+        player.vx = -autoWallBounceHSpeed; 
       }
-      hasAutoBounced = true;      // Mark that auto bounce has occurred
-      jumpedFromPlatform = false; // Consume the "jumped from platform" state for this bounce
-      // Play jump sound for auto bounce
+      hasAutoBounced = true;    
+      jumpedFromPlatform = false; 
       if (isSoundOn) {
         const jumpSound = document.getElementById('jumpSound');
         jumpSound.currentTime = 0;
@@ -701,18 +696,16 @@ function initGame() {
       }
     }
 
-    // Wall slide mechanic (if touching wall and falling)
-    if (isTouchingWall && player.vy > 0.1) { // Check vy > 0.1 to avoid sticking
-      player.vy *= wallSlideFriction; // Slow down fall speed
+   
+    if (isTouchingWall && player.vy > 0.1) { 
+      player.vy *= wallSlideFriction; 
     }
 
-    // Oyuncu ekranın altına düştüğünde oyun biter
     if (player.y > height) {
         gameOver = true;
     }
 
     if (gameStarted) { 
-      // Sadece oyun başladığında ekranı kaydır
       player.y += scrollSpeed;
       platforms.forEach(p => p.y += scrollSpeed);
     }
@@ -728,7 +721,7 @@ function initGame() {
     generateNewPlatforms();
 
     maybeSpawnBuff();
-    maybeSpawnDebuff(); // Call to spawn debuffs
+    maybeSpawnDebuff(); 
 
     if (buff) {
       const buffX = buff.platform.x + buff.offsetX;
@@ -743,16 +736,16 @@ function initGame() {
       if (isColliding) {
         // Buff türüne göre farklı puan ver
         if (buff.type === 0) {
-          // Tema 1 buff'ı - winter1.png
+          
           bonusScore += 30;
         } else if (buff.type === 1) {
-          // Tema 2 buff'ı - futuristic1.png
+          
           bonusScore += 60;
         } else if (buff.type === 2) {
-          // Tema 3 buff'ı - forest1.png
+          
           bonusScore += 100;
         } else {
-          // Tema 4 buff'ı - space1.png
+          
           bonusScore += 200;
         }
         
@@ -766,7 +759,6 @@ function initGame() {
       }
     }
 
-    // Collision with Debuff
     if (activeDebuff) {
       const debuffX = activeDebuff.platform.x + activeDebuff.offsetX;
       const debuffY = activeDebuff.platform.y + activeDebuff.offsetY;
@@ -782,8 +774,7 @@ function initGame() {
           controlsReversed = true;
           reverseControlsStartTime = Date.now();
         }
-        activeDebuff = null; // Remove debuff from screen
-        // Play sound (using existing buffSound element for starsound.wav)
+        activeDebuff = null; 
         if (isSoundOn) {
           const soundEffect = document.getElementById('buffSound');
           soundEffect.currentTime = 0;
@@ -832,8 +823,8 @@ function initGame() {
       if (platformImg && platformImg.complete && platformImg.naturalWidth > 0) {
         ctx.drawImage(platformImg, p.x, p.y, p.width, p.height);
       } else {
-        // Fallback to original drawing method if image not loaded or not available
-        ctx.fillStyle = p.color; // p.color is currently '#fff'
+       
+        ctx.fillStyle = p.color;
         ctx.fillRect(p.x, p.y, p.width, p.height);
       }
     });
@@ -842,7 +833,6 @@ function initGame() {
       const buffX = buff.platform.x + buff.offsetX;
       const buffY = buff.platform.y + buff.offsetY;
       
-      // Buff türüne göre doğru görseli kullan
       const buffImg = buffImages[buff.type];
       if (buffImg.complete) {
         ctx.drawImage(buffImg, buffX, buffY, buff.width, buff.height);
@@ -866,18 +856,16 @@ function initGame() {
       ctx.font = '20px monospace';
       ctx.textAlign = 'center';
       ctx.fillText('TERS KONTROLLER!', width / 2, 30);
-      ctx.textAlign = 'left'; // Reset alignment
+      ctx.textAlign = 'left'; 
     }
 
     if (gameOver) {
-  // Yüksek skor kontrolü ve güncelleme
   const isNewHighScore = score > highScore;
   if (isNewHighScore) {
     highScore = score;
     localStorage.setItem('highScore', highScore);
   }
   
-  // Skoru yüksek skorlar listesine ekle
   const newScoreEntry = {
     score: score,
     date: new Date().toISOString(),
@@ -886,22 +874,19 @@ function initGame() {
   
   highScores.push(newScoreEntry);
   
-  // Skorları sırala ve en yüksek MAX_HIGH_SCORES kadarını tut
   highScores.sort((a, b) => b.score - a.score);
   if (highScores.length > MAX_HIGH_SCORES) {
     highScores = highScores.slice(0, MAX_HIGH_SCORES);
   }
   
-  // Yüksek skorları kaydet
+
   localStorage.setItem('highScores', JSON.stringify(highScores));
   
-  // Oyun sonu ekranını güncelle
   document.getElementById('finalScore').textContent = `Skor: ${score}`;
   document.getElementById('highScoreDisplay').textContent = `En Yüksek Skor: ${highScore}`;
   document.getElementById('newHighScore').style.display = isNewHighScore ? 'block' : 'none';
   document.getElementById('gameOverScreen').style.display = 'flex';
   
-  // Müziği durdur
   if (isMusicOn) {
     const bgm = document.getElementById('bgm');
     bgm.pause();
@@ -931,66 +916,53 @@ function initGame() {
       update();
       draw();
     } else {
-      draw(); // ESC veya oyun sonu için
+      draw(); 
     }
   }
-  
-  // Oyun döngüsünü başlat
   gameLoop();
 }
 function restartGame() {
-  // Oyun sonu ekranını gizle
   document.getElementById('gameOverScreen').style.display = 'none';
 
-  // Oyun durumunu tamamen sıfırla
   gameOver = false;
   isPaused = false;
   gameStarted = false;
-  
-  // Animasyon frame'i iptal et
+
   if (gameAnimationFrameId) {
     cancelAnimationFrame(gameAnimationFrameId);
     gameAnimationFrameId = null;
   }
-  
-  // Müziği durdur ve yeniden başlat
+
   const bgm = document.getElementById('bgm');
   bgm.pause();
   bgm.currentTime = 0;
-  
-  // Yeni oyun için startGame() çağır (mevcut seçili karakterle başlatmak için)
   startGame();
 }
 
 function returnToMenu() {
   document.getElementById('gameOverScreen').style.display = 'none';
-
-  // Oyunla ilgili tüm durumları sıfırla
   isPaused = false;
   gameOver = false;
   gameStarted = false;
 
-  // Müziği durdur
   const bgm = document.getElementById('bgm');
   bgm.pause();
   bgm.currentTime = 0;
 
-  // Arayüzleri düzenle
   document.getElementById('menu').style.display = 'flex';
   document.getElementById('character-select').style.display = 'none';
   document.getElementById('settings').style.display = 'none';
   document.getElementById('pauseMenu').style.display = 'none';
 
-  // Oyun ekranını temizle
   const ctx = document.getElementById('gameCanvas').getContext('2d');
   ctx.clearRect(0, 0, 400, 600);
 
-  // Oyun döngüsünü durdur
   if (gameAnimationFrameId) {
     cancelAnimationFrame(gameAnimationFrameId);
     gameAnimationFrameId = null;
   }
 }
+
 </script>
 </body>
 </html>
